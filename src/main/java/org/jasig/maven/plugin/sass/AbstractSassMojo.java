@@ -78,7 +78,7 @@ public abstract class AbstractSassMojo extends AbstractMojo {
      *
      * @parameter default-value="${project.build.directory}/rubygems"
      */
-    protected String[] gemPaths = new String[0];
+    protected String gemPaths;
 
     /**
      * Defines gems to be loaded before Sass/Compass. This is useful to add gems
@@ -141,6 +141,15 @@ public abstract class AbstractSassMojo extends AbstractMojo {
      * @required
      */
     protected File sassSourceDirectory;
+
+    /**
+     * SASS Config File, defaults (src/main/webapp/config.rb)
+     *
+     * @parameter default-value="${basedir}/src/main/webapp/config.rb" 
+     * @required
+     */
+    protected File sassConfigFile;
+
     
     /**
      * Defines files in the source directories to include
@@ -203,9 +212,9 @@ public abstract class AbstractSassMojo extends AbstractMojo {
 
         sassScript.append("require 'rubygems'\n");
 
-        if (gemPaths.length > 0) {
+        if (gemPaths != null && gemPaths.length() > 0) {
             sassScript.append("env = { 'GEM_PATH' => [\n");
-            for (final String gemPath : gemPaths) {
+            for (final String gemPath : gemPaths.split( "," )) {
                 sassScript.append("    '").append(gemPath).append("',\n");
             }
             sassScript.setLength(sassScript.length() - 2); // remove trailing comma
@@ -226,7 +235,9 @@ public abstract class AbstractSassMojo extends AbstractMojo {
             log.info("Running with Compass enabled.");
             sassScript.append("require 'compass'\n");
             sassScript.append("require 'compass/exec'\n");
-            sassScript.append("Compass.add_project_configuration \n");
+            //sassScript.append("Compass.add_project_configuration \n");
+	    sassScript.append("Compass.add_project_configuration(File.join('" + this.sassConfigFile.toString()+ "'))\n");
+	    sassScript.append("Compass.configuration.project_path = File.join('" + this.buildDirectory + "')\n");
             this.sassOptions.put("load_paths", "Compass.configuration.sass_load_paths");
             // manually specify these paths
             sassScript.append("Compass::Frameworks.register_directory('jar:'+ File.join(Compass.base_directory, 'frameworks/compass'))\n");
